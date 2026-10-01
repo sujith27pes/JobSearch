@@ -1,0 +1,6 @@
+{
+  "name": "jobscore", "private": true, "version": "2.0.0", "type": "module",
+  "scripts": {"dev":"vite --host 127.0.0.1 --configLoader native", "build":"tsc -b && vite build --configLoader native", "preview":"vite preview --host 127.0.0.1 --configLoader native"},
+  "dependencies": {"react":"^19.1.0", "react-dom":"^19.1.0", "react-router-dom":"^7.6.0", "@tanstack/react-query":"^5.80.0", "@tanstack/react-table":"^8.21.0", "@radix-ui/react-dialog":"^1.1.6", "@radix-ui/react-slot":"^1.1.2", "class-variance-authority":"^0.7.1", "clsx":"^2.1.1", "tailwind-merge":"^3.3.0", "lucide-react":"^0.468.0"},
+  "devDependencies": {"typescript":"~5.8.3", "@types/react":"^19.1.0", "@types/react-dom":"^19.1.0", "@vitejs/plugin-react":"^4.5.0", "vite":"^6.3.5", "tailwindcss":"^4.1.0", "@tailwindcss/vite":"^4.1.0", "openapi-typescript":"^7.8.0"}
+}

@@ -1,0 +1,18 @@
+{
+  "mode": "Offline synthetic demonstration, not an AI accuracy claim",
+  "profiles": 30,
+  "eligible": 26,
+  "criteria_checked": 150,
+  "matching_expected": 150,
+  "agreement": 1.0,
+  "unreferenced_assessable_claims": 0,
+  "errors": [],
+  "model_calls": 0,
+  "model_tokens": 0,
+  "seconds": 0.031,
+  "limitations": [
+    "Synthetic fixtures contain six repeating patterns, not a representative recruitment dataset.",
+    "AI endpoint, fairness, and real-world hiring accuracy are not evaluated.",
+    "Matching may still be semantically incorrect despite a valid evidence reference."
+  ]
+}

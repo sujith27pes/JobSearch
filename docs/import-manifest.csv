@@ -1,0 +1,2 @@
+source_type,source_record_id,filename,updated_at,matching_allowed,retention_expires_at,application_status,rejected_at,previous_job_title,previous_stage,previous_outcome,silver_medalist,internal_visibility
+past_applicant,SYNTHETIC-EXAMPLE-001,example.docx,2026-09-28,true,2026-12-28,rejected,2026-09-01,Infrastructure Engineer,Final interview,Role requirements differed,true,false
