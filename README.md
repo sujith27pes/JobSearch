@@ -10,6 +10,8 @@ A working local recruiter workspace built with React, TypeScript, FastAPI and SQ
 
 The prepared application is served at **http://127.0.0.1:8000** while the API and worker are running.
 
+Use the **Light / Dark** switch in the top bar to change the appearance. It follows your system theme until you choose a mode, then remembers your choice in this browser.
+
 On this machine, run `Start-JobScore.ps1` from this folder to launch both processes and open the browser. It uses the installed `.venv` and compiled frontend. Stop with Ctrl+C.
 
 For a fresh checkout (Python 3.12+, Node 22.18+ or 24 recommended):
