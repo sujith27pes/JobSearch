@@ -589,7 +589,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "not_reviewed" | "reviewing" | "shortlisted" | "reviewed_not_shortlisted";
+            status: "not_reviewed" | "reviewing" | "shortlisted" | "reviewed_not_shortlisted" | "rejected";
             /** Reason */
             reason: string;
             /**

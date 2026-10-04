@@ -10,4 +10,4 @@ export async function api<T=any>(path:string,init:RequestInit={}):Promise<T>{
 export const send=(method:string,body?:unknown):RequestInit=>({method,body:body===undefined?undefined:JSON.stringify(body)});
 export type Row=Record<string,any>;
 export const sourceLabels:Record<string,string>={current_applicant:'Applicants',past_applicant:'Rediscovered',employee:'Internal talent'};
-export const statusLabels:Record<string,string>={supported:'Supported',partial:'Partial',not_evidenced:'Needs clarification',unmet:'Does not meet requirement',not_reviewed:'Not reviewed',reviewing:'Reviewing',shortlisted:'Shortlisted',reviewed_not_shortlisted:'Reviewed'};
+export const statusLabels:Record<string,string>={supported:'Supported',partial:'Partial',not_evidenced:'Needs clarification',unmet:'Does not meet requirement',not_reviewed:'Not reviewed',reviewing:'Reviewing',shortlisted:'Shortlisted',reviewed_not_shortlisted:'Not shortlisted',rejected:'Reject for this job'};

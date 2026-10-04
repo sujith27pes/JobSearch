@@ -1405,7 +1405,8 @@
               "not_reviewed",
               "reviewing",
               "shortlisted",
-              "reviewed_not_shortlisted"
+              "reviewed_not_shortlisted",
+              "rejected"
             ],
             "title": "Status"
           },

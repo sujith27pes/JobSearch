@@ -30,9 +30,6 @@ async def lifespan(app):
         for j in db.all_of(s,'job'):
             if j.get('synthetic') and j['id'] not in ('job_demo_1','job_demo_2','job_demo_3'):
                 db.put(s,j['id'],{**j,'synthetic':False})
-    if MODE=='demo' and os.getenv('JOBSCORE_SEED','1')=='1':
-        from .seed import seed
-        seed()
     yield
 
 app=FastAPI(title='JobScore API',version='2.0.0',lifespan=lifespan,description='Local synthetic-data hackathon build. Not an authenticated production deployment.')
@@ -254,14 +251,24 @@ def compare(id:str,data:Comparison,s=Depends(session)):
 @app.patch('/api/jobs/{id}/profiles/{profile_id}/review')
 def review(id:str,profile_id:str,data:Review,s=Depends(session)):
     j=need(s,id,'job');p=need(s,profile_id,'profile');access(p)
-    if not eligibility(p,j,pools=POOLS)[0]:raise HTTPException(410,'Profile is no longer eligible for this job.')
     rid='review_'+id+'_'+profile_id;r=db.get(s,rid)
     if (r['revision'] if r else 0)!=data.revision:raise HTTPException(409,'Review changed. Refresh first.')
-    body={'job_id':id,'profile_id':profile_id,'status':'shortlisted' if data.move_to_interview else data.status,'stage':'interview' if data.move_to_interview else (r.get('stage','review') if r else 'review'),'reason':data.reason,'actor':ACTOR}
+    rejecting=data.status=='rejected'
+    already_rejected=p['source_type']=='past_applicant' and p.get('application_status')=='rejected' and p.get('rejected_job_id')==id
+    if rejecting and not (already_rejected or (p['source_type']=='current_applicant' and p.get('job_id')==id)):
+        raise ValueError('Reject this job\'s current applicants. Use Not shortlisted for rediscovered or internal candidates.')
+    if rejecting and 'past_applicant' not in POOLS:raise HTTPException(403,'This workspace cannot move applicants into the past-applicant pool.')
+    checked={**p,'source_type':'current_applicant'} if rejecting and already_rejected else p
+    if not eligibility(checked,j,pools=POOLS)[0]:raise HTTPException(410,'Profile is no longer eligible for this job.')
+    body={'job_id':id,'profile_id':profile_id,'status':'shortlisted' if data.move_to_interview else data.status,'stage':'rejected' if rejecting else ('interview' if data.move_to_interview else (r.get('stage','review') if r else 'review')),'reason':data.reason,'actor':ACTOR}
     result=db.put(s,rid,{**body,'revision':data.revision}) if r else db.add(s,'review',body,rid)
-    if data.move_to_interview:
+    if rejecting and not already_rejected:
+        other_interview=bool(p.get('active_interview') and p.get('interview_job_id') and p['interview_job_id']!=id)
+        rejected_at=p.get('rejected_at') if p.get('application_status')=='rejected' and parsedate(p.get('rejected_at')) else date.today().isoformat()
+        db.put(s,profile_id,{**p,'source_type':'past_applicant','application_status':'rejected','rejected_at':rejected_at,'rejected_job_id':id,'rejection_reason':data.reason,'rejection_actor':ACTOR,'rejection_recorded_at':db.now(),'active_interview':other_interview,'previous_job_title':j['title'],'previous_stage':p.get('application_status','applied'),'previous_outcome':data.reason})
+    elif data.move_to_interview:
         db.put(s,profile_id,{**p,'application_status':'interview','active_interview':True,'interview_job_id':id,'interview_at':db.now(),'interview_actor':ACTOR,'interview_reason':data.reason})
-    db.audit(s,'moved_to_interview' if data.move_to_interview else 'review_updated',profile_id,data.reason,ACTOR)
+    db.audit(s,'application_rejected' if rejecting else ('moved_to_interview' if data.move_to_interview else 'review_updated'),profile_id,data.reason,ACTOR)
     return result
 
 @app.get('/api/processing')
@@ -410,8 +417,11 @@ def imports(files:list[UploadFile]=File(...),manifest:UploadFile|None=File(None)
                 pid=existing['id'] if existing else db.ident('profile');vid=db.ident('pv')
                 body={'source_type':src,'source_record_id':sid,'filename':filename,'updated_at':updated,'retention_expires_at':existing['retention_expires_at'] if replacement else expires,'matching_allowed':existing['matching_allowed'] if replacement else flag('matching_allowed',True),'internal_visibility':flag('internal_visibility'),'suppressed':existing.get('suppressed',False) if existing else False,'application_status':existing.get('application_status','applied') if replacement else status,'rejected_at':existing.get('rejected_at') if replacement else rejected,'active_interview':existing.get('active_interview',False) if existing else False,'previous_job_title':m.get('previous_job_title'),'previous_stage':m.get('previous_stage'),'previous_outcome':m.get('previous_outcome'),'silver_medalist':flag('silver_medalist'),'job_id':job_id if src=='current_applicant' else None,'facts':facts,'evidence':ev,'version_id':vid,'document_hash':h,'synthetic':False,'processing_status':'queued'}
                 if existing:
-                    for field in ('interview_job_id','interview_at','interview_actor','interview_reason'):
+                    for field in ('interview_job_id','interview_at','interview_actor','interview_reason','rejected_job_id','rejection_reason','rejection_actor','rejection_recorded_at'):
                         if field in existing:body[field]=existing[field]
+                    if existing.get('rejected_job_id'):
+                        for field in ('rejected_at','job_id','previous_job_title','previous_stage','previous_outcome'):
+                            body[field]=existing.get(field)
                     if existing.get('active_interview') and existing.get('application_status')=='interview':
                         body['application_status']='interview'
                         body['facts']=existing['facts']

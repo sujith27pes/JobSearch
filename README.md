@@ -2,6 +2,8 @@
 
 Latest fixes (4 October 2026): see `docs/CHANGES-2026-10-04.md` for the complete change log and validation. Restart the launcher and refresh the browser to load the update. Authored jobs now appear by default; explicit requests can wait behind existing queue work, with worker concurrency still bounded.
 
+Sample data has been removed from the workspace. Startup no longer creates example jobs or resumes, including when an older environment sets `JOBSCORE_SEED=1`. New workspaces start empty. Fictional fixtures remain confined to automated tests and the isolated benchmark.
+
 A working local recruiter workspace built with React, TypeScript, FastAPI and SQLite. The original Streamlit prototype in Downloads was used as a reference and was not modified. No API key or private environment file was copied.
 
 ## Open the application
@@ -27,7 +29,7 @@ The native Vite config loader avoids unnecessary config bundling. The launcher b
 ## What is implemented
 
 - React enterprise workspace: jobs, overview, source-specific matches, detail dialogs, source drawers, comparisons, rubric editor, talent library and processing history.
-- 30 explicitly synthetic profiles: 10 current applicants, 12 historical applications, 8 employees; three engineering jobs.
+- Isolated test fixtures covering 30 fictional profiles and three engineering jobs; these are not added to the workspace.
 - Immutable approved rubrics, normalized deterministic scoring, separate essential status and evidence coverage.
 - Contextual and project-combination interpretation through an optional AI endpoint; a clearly labelled limited offline preview works without credentials.
 - Evidence IDs validated against stored source passages; PDF page/text block and DOCX paragraph/table-cell locations.
@@ -43,11 +45,13 @@ The native Vite config loader avoids unnecessary config bundling. The launcher b
 
 ## Your updated rediscovery rule
 
+To reject a current applicant, open their candidate details and select **Your review → Reject for this job**, enter a reason, then click **Reject candidate**. This records the rejection date, closes the application for the original job, and moves the profile to past applicants without deleting its resume. In another job, choose **Search existing talent → Rediscovered**. Matching permission, retention and interview exclusions still apply. Repeating rejection or updating the resume does not restart the eligibility window. For rediscovered and internal candidates, **Not shortlisted** records the review decision without changing their source lifecycle.
+
 Only applications with `application_status=rejected` and a valid `rejected_at` qualify. The window is **three calendar months after the rejection date**, end-exclusive. For example, a 28 June rejection stops qualifying on 28 September; a 31 January rejection stops qualifying on 30 April. Refreshing a resume does not reset this clock.
 
 Approved, interviewing, hired and withdrawn applications do not qualify. The candidate review action **Approve and move to interview** immediately blocks rediscovery across jobs. Stale imports cannot clear the local active-interview flag. Profile expiry removes the application from matching; it does not destructively delete audit history. Retention expiry is an additional independent exclusion.
 
-The demo deliberately includes four excluded historical profiles: expired rediscovery, interview, revoked matching permission, and retention expiry. Therefore the first job normally has **26** eligible profiles, including **8** rediscovered profiles.
+The isolated test fixtures include four excluded historical profiles: expired rediscovery, interview, revoked matching permission, and retention expiry. The benchmark checks **26** eligible profiles, including **8** rediscovered profiles; the workspace contains only your own data.
 
 ## Offline demonstration and AI mode
 
@@ -79,7 +83,7 @@ Historical and employee imports require the CSV manifest described in `docs/impo
 
 Imports return queued items immediately. The worker extracts, validates and then queues affected approved jobs. Failures remain visible in Processing. Raw upload files are removed after successful extraction; exact source passages remain in SQLite. Failed upload files remain available for retry and are deleted with their profile.
 
-The workspace allows 30 uploaded profiles in addition to fictional sample profiles. Samples do not consume the upload allowance. Example jobs are hidden by default; enable Show example jobs to practise.
+The workspace allows 30 uploaded profiles. Add your own job descriptions and resumes; sample-data controls have been removed from the interface.
 
 ## Development
 

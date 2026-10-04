@@ -41,6 +41,8 @@ def eligibility(profile, job=None, today=None, pools=None):
         return False, 'Retention expired or not supplied'
     source = profile['source_type']
     if source == 'past_applicant':
+        if job and profile.get('rejected_job_id')==job['id']:
+            return False, 'Application was rejected for this job'
         if profile.get('application_status') != 'rejected':
             return False, 'Only rejected applications enter rediscovery'
         if profile.get('active_interview'):

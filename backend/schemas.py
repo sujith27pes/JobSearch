@@ -54,10 +54,16 @@ class OpportunityRequest(StrictModel):
     job_ids: list[str] | None = Field(default=None, min_length=1, max_length=3)
 
 class Review(StrictModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     revision: int
-    status: Literal['not_reviewed', 'reviewing', 'shortlisted', 'reviewed_not_shortlisted']
+    status: Literal['not_reviewed', 'reviewing', 'shortlisted', 'reviewed_not_shortlisted', 'rejected']
     reason: str = Field(min_length=3, max_length=1000)
     move_to_interview: bool = False
+    @model_validator(mode='after')
+    def distinct_actions(self):
+        if self.status=='rejected' and self.move_to_interview:
+            raise ValueError('Choose rejection or moving to interview, not both.')
+        return self
 
 class ProfilePatch(StrictModel):
     revision: int
