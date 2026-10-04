@@ -52,7 +52,7 @@ def get(s, id, kind=None):
     return {**r.body, 'revision': r.revision}
 
 def all_of(s, kind):
-    return [{**r.body, 'revision': r.revision} for r in s.scalars(select(Record).where(Record.kind == kind)).all()]
+    return [{**r.body, 'revision': r.revision} for r in s.scalars(select(Record).where(Record.kind == kind).order_by(Record.body['created_at'].as_string(), Record.id)).all()]
 
 def put(s, id, body):
     r = s.get(Record, id)
@@ -62,7 +62,7 @@ def put(s, id, body):
         from sqlalchemy.orm.exc import StaleDataError
         raise StaleDataError('Record changed concurrently')
     r.revision += 1
-    r.body = {**body, 'id': id, 'revision': r.revision}
+    r.body = {**body, 'created_at': body.get('created_at', r.body.get('created_at', now())), 'id': id, 'revision': r.revision}
     s.flush()
     return r.body
 

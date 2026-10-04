@@ -72,11 +72,12 @@ def month_index(value, today=None):
     return y * 12 + m - 1 if 1 <= m <= 12 else None
 
 def union_months(roles, today=None):
+    current = month_index('present', today)
     intervals = []
     for r in roles:
         a, b = month_index(r.get('start'), today), month_index(r.get('end'), today)
-        if a is not None and b is not None and a <= b:
-            intervals.append((a, b + 1))
+        if a is not None and b is not None and a <= b and a <= current:
+            intervals.append((a, min(b,current) + 1))
     if not intervals:
         return None
     total, left, right = 0, *sorted(intervals)[0]
@@ -126,7 +127,8 @@ def overlaps(criteria):
             found.append(f"{a['requirement']} / {b['requirement']}")
     return found
 
-def score(criteria, items, evidence, facts=None):
+def score(criteria, items, evidence, facts=None, today=None):
+    today = today or datetime.now(timezone.utc).date()
     active = [c for c in criteria if c.get('enabled', True) and c['weight'] > 0]
     total = sum(c['weight'] for c in active)
     if total <= 0:
@@ -153,7 +155,7 @@ def score(criteria, items, evidence, facts=None):
         if c.get('required_months'):
             if facts is not None and i.get('months') is not None:
                 supported_roles=[roles_byid[rid] for rid in i.get('role_ids',[]) if set(roles_byid[rid].get('evidence_ids',[])) & set(refs)]
-                ceiling=union_months(supported_roles)
+                ceiling=union_months(supported_roles, today)
                 if ceiling is None:
                     i={**i,'months':None}
                 elif i['months']>ceiling:
@@ -164,11 +166,14 @@ def score(criteria, items, evidence, facts=None):
             else:
                 i = {**i, 'status': 'supported' if credit == 1 else ('partial' if credit > 0 else 'unmet')}
         if c.get('recency_months'):
-            used = month_index(i.get('last_used'))
+            used = month_index(i.get('last_used'), today)
             if used is None:
                 credit = 0
                 i = {**i, 'status': 'not_evidenced', 'rationale': 'Last use is unclear; the approved recency condition needs evidence.'}
-            elif month_index('present') - used > c['recency_months']:
+            elif used > month_index('present', today):
+                credit = 0
+                i = {**i, 'status': 'not_evidenced', 'rationale': 'The last-use date is in the future. Confirm the date before assessing the approved recency condition.'}
+            elif month_index('present', today) - used > c['recency_months']:
                 credit = 0
                 i = {**i, 'status': 'unmet', 'rationale': 'Last evidenced use does not meet the approved recency condition.'}
         w = c['weight'] / total
@@ -178,7 +183,7 @@ def score(criteria, items, evidence, facts=None):
             coverage += 100 * w
         if c['essential']:
             essentials[i['status']] += 1
-        rows.append({**i, 'requirement': c['requirement'], 'category': c['category'], 'essential': c['essential'], 'credit': credit, 'normalized_weight': w, 'contribution': contribution, 'potential_increase': 100 * w * (1-credit), 'full_credit': c['full_credit']})
+        rows.append({**i, 'requirement': c['requirement'], 'category': c['category'], 'terms': c.get('terms', []), 'equivalents': c.get('equivalents', []), 'essential': c['essential'], 'credit': credit, 'normalized_weight': w, 'contribution': contribution, 'potential_increase': 100 * w * (1-credit), 'full_credit': c['full_credit']})
     skillrows = [r for r in rows if r['category'] == 'skill']
     text = '\n'.join(e['text'] for e in evidence)
     skillweight = sum(r['normalized_weight'] for r in skillrows)
@@ -198,8 +203,8 @@ def score(criteria, items, evidence, facts=None):
     gaps = sorted([r for r in rows if r['credit'] < 1], key=lambda r:(not r['essential'], -r['potential_increase']))
     gap = gaps[0]['requirement'] if gaps else 'No documented gaps'
     relevant_ids = {rid for r in rows for rid in r.get('role_ids', [])}
-    relevant_months = union_months([r for r in (facts or {}).get('roles', []) if r['id'] in relevant_ids])
-    return {'overall_score': int(raw + .5), 'raw_score': raw, 'coverage': int(coverage+.5), 'essentials': essentials, 'results': rows, 'strength': strength['requirement'] if strength['credit'] else 'No supported criteria yet', 'gap': gap, 'summary': ((f"The resume provides evidence for {strength['requirement']}. " if strength['credit'] else "No requirement has enough supporting evidence yet. ") + ("Discuss with the candidate: " + gap + "." if gaps else "All assessed requirements are supported.")), 'exact_coverage': round(base), 'contextual_coverage': round(ctx), 'overlooked': ctx-base >= 20-1e-9 and bool(recovered), 'overlooked_reasons': recovered, 'relevant_months': relevant_months}
+    relevant_months = union_months([r for r in (facts or {}).get('roles', []) if r['id'] in relevant_ids], today)
+    return {'evaluation_date': today.isoformat(), 'overall_score': int(raw + .5), 'raw_score': raw, 'coverage': int(coverage+.5), 'essentials': essentials, 'results': rows, 'strength': strength['requirement'] if strength['credit'] else 'No supported criteria yet', 'gap': gap, 'summary': ((f"The resume provides evidence for {strength['requirement']}. " if strength['credit'] else "No requirement has enough supporting evidence yet. ") + ("Discuss with the candidate: " + gap + "." if gaps else "All assessed requirements are supported.")), 'exact_coverage': round(base), 'contextual_coverage': round(ctx), 'overlooked': ctx-base >= 20-1e-9 and bool(recovered), 'overlooked_reasons': recovered, 'relevant_months': relevant_months}
 
 def scenarios(assessment, target):
     rows = sorted([r for r in assessment['results'] if r['credit'] < 1], key=lambda r:(-r['potential_increase'], r['criterion_id']))

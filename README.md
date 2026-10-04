@@ -1,5 +1,7 @@
 # JobScore
 
+Latest fixes (4 October 2026): see `docs/CHANGES-2026-10-04.md` for the complete change log and validation. Restart the launcher and refresh the browser to load the update. Authored jobs now appear by default; explicit requests can wait behind existing queue work, with worker concurrency still bounded.
+
 A working local recruiter workspace built with React, TypeScript, FastAPI and SQLite. The original Streamlit prototype in Downloads was used as a reference and was not modified. No API key or private environment file was copied.
 
 ## Open the application
@@ -65,7 +67,7 @@ LLM_OUTPUT_PRICE_PER_MILLION=0
 
 The launcher loads `.env` into the process environment. Running uvicorn/worker separately requires setting their environment yourself. Both must use the same mode and model. Never commit `.env`.
 
-The configured Groq endpoint passed two fictional responsibility-first experience tests. General semantic quality, document variation and latency still require evaluation before a real-data pilot. Pricing is **unavailable** unless configured; zero-cost operation in demo mode means no model requests, not proof of production savings.
+The configured NVIDIA Nemotron 3 Ultra 550B endpoint passed a fictional end-to-end check: JD extraction, resume extraction and responsibility-first assessment (3 requests, 3,444 tokens). General semantic quality, document variation and latency still require evaluation before a real-data pilot. Pricing is **unavailable** unless configured; zero-cost operation in demo mode means no model requests, not proof of production savings.
 
 Use synthetic data until your organisation approves the data flow. Extraction sends document passages to the configured model endpoint. No source-system connection, live Taleo access, email outreach, or manager notification is implemented or simulated as live.
 
@@ -117,3 +119,63 @@ Confirm requirements → Add resumes → Review candidates. Advanced scoring and
 ## Finding interview-stage candidates
 
 Open Interviews in the sidebar. Moving a candidate to interview opens this list automatically and records the job, date and review reason. Past applicants leave Rediscovered but remain in interview tracking while permissions and retention allow access. Older moves appear too; if their job cannot be unambiguously recovered, Job not recorded is shown.
+
+
+## Bug fixes and recruiter insights — 2 October 2026
+
+The seven reported failures are fixed: separator-only JD lines are ignored; recency and duration use a saved evaluation date; uploads offer safe replacement and identical-file reuse; three-candidate comparisons show all three pairs; missing profile snapshots are skipped; shared extraction caches survive deletion of one owner; ingestion claims start at parsing. Queue order is explicit, and record updates preserve creation timestamps.
+
+**Update a resume:** open its job, choose **Add resumes**, then select the candidate under **Replace an existing candidate’s resume**. Upload one PDF/DOCX. This creates a profile version while preserving permissions and interview stage. An identical file uploaded to the same job reuses the existing candidate. A changed file with an existing filename requires an explicit replacement choice. Different names/files cannot reliably establish identity; do not upload an update as a new applicant. Names alone are never used to merge people. Source-managed profiles are updated through their authorised manifest IDs.
+
+**New candidate insights:** open a candidate. In **Job fit**, expand **When were these skills evidenced?** or **Could this candidate fit another role?**. In **Work history**, inspect title transitions, literal promotion claims, dated promotion intervals and short completed roles. Scope claims link to supplied evidence; title changes are not classified automatically as promotions. Short-tenure context means at least three completed roles under 18 months, ending within five years; ongoing roles are excluded. No career or tenure signal changes the score.
+
+**Other jobs:** the recruiter explicitly requests up to three other approved, eligible roles. These requests use the same cached engine and bounded queue. Results display essential gaps as well as score. Current applicants remain attached to their original job; no new application, interview move or outreach occurs. Scores against different rubrics are leads for review, not interchangeable measures of candidate quality.
+
+**Monitoring:** the sidebar shows distributions by talent pool, unresolved essentials, stale assessments, evidence coverage and retained monthly history across requisitions. Samples are excluded by default. Means are withheld for fewer than five observations. This is assessment monitoring, not a protected-group adverse-impact analysis. Demographic data collection and a validated fairness study are outside this release.
+
+### NVIDIA Nemotron free-endpoint configuration
+
+Keep your existing API key in `.env`; it was not modified. These defaults are applied automatically for `integrate.api.nvidia.com`:
+
+```text
+LLM_BASE_URL=https://integrate.api.nvidia.com/v1
+LLM_MODEL=nvidia/nemotron-3-ultra-550b-a55b
+LLM_REQUESTS_PER_MINUTE=5
+LLM_TIMEOUT_SECONDS=180
+LLM_QUEUE_TIMEOUT_SECONDS=240
+LLM_MAX_OUTPUT_TOKENS=6000
+LLM_REASONING_EFFORT=none
+```
+
+The endpoint receives `stream=false` and `reasoning_effort=none`. JSON is validated locally; fenced JSON is supported, but truncated/incomplete output is never saved as an assessment. The API process and worker share a database-backed request gate, so there is one NVIDIA request in flight and at least 12 seconds between request starts. Short 429 delays are respected; a long or exhausted 429 activates a shared cooldown that prevents follow-on network requests. Provider quotas and outages cannot be guaranteed by the application. Five requests/minute is our conservative limit, not NVIDIA's published quota. Higher reasoning settings may need more output tokens and time.
+
+NVIDIA references: [model inference API](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer), [model card](https://build.nvidia.com/nvidia/nemotron-3-ultra-550b-a55b/modelcard).
+
+After updating this folder, stop the existing launcher with Ctrl+C, then run `.\.venv\Scripts\python.exe run.py`. Refresh the browser. No database reset is needed. Scores from earlier prompt versions display an update action. Monthly recency/duration refreshes run while the worker is active and cached interpretations exist.
+
+Other-role results include requirement-level evidence links. Choose the jobs using the checkboxes before starting a search; unselected jobs have not been assessed.
+
+## Connection troubleshooting — 3 October 2026
+
+Open **Activity → Check AI connection** to check DNS and HTTPS reachability from the API process. It sends no resumes and makes no model generation. A successful reachability check does not validate your API key or quota.
+
+From PowerShell in the JobScore folder, these commands load your `.env` and exit after the check:
+
+```powershell
+# Network check, no model tokens
+.\.venv\Scripts\python.exe run.py --check-model
+# Optional authenticated test: a tiny CONNECTED reply, no resumes
+.\.venv\Scripts\python.exe run.py --test-model
+```
+
+The authenticated test uses a small amount of provider quota. It passed with the configured NVIDIA model on 3 October 2026: HTTP 200, 32 tokens. This confirms connectivity and authentication at that time; the exact cause of earlier generic connection failures remains unverified.
+
+Connection failures now distinguish DNS, certificate verification, network permission, proxy and refused connections when the underlying exception supplies that cause. Windows uses its approved system certificate roots. If IT supplies a PEM bundle, set `LLM_CA_BUNDLE` to its path; certificate verification always stays enabled. Do not disable TLS verification.
+
+Stop your running launcher with **Ctrl+C**, then start the updated code:
+
+```powershell
+.\.venv\Scripts\python.exe run.py
+```
+
+Refresh the browser. In **Activity**, retry the latest failed resumes after connectivity is restored. Saved failures are not automatically retried. The default table shows only current attempts; **Show all attempt history** reveals older attempts without offering an obsolete retry. No database reset or API key replacement is required.

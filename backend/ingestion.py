@@ -30,7 +30,7 @@ def ingest(task_id):
             if not current or current['version_id']!=t['profile_version']:raise ValueError('Profile changed during extraction.')
             if not eligibility({**current,'processing_status':'ready'})[0]:raise ValueError('Profile permission or lifecycle changed during extraction.')
             p=db.put(s,p['id'],{**current,'facts':facts,'evidence':evidence,'processing_status':'ready'})
-            if not db.get(s,p['version_id']):db.add(s,'profile_version',{'profile_id':p['id'],'facts':facts,'evidence':evidence},p['version_id'])
+            if not db.get(s,p['version_id']):db.add(s,'profile_version',{'profile_id':p['id'],'facts':facts,'evidence':evidence,'document_hash':p['document_hash']},p['version_id'])
             if not db.get(s,t['extraction_cache_id']):db.add(s,'extraction_cache',{'document_hash':p['document_hash'],'evidence':evidence,'facts':facts},t['extraction_cache_id'])
             db.add(s,'refresh',{'profile_id':p['id'],'status':'queued'})
             db.audit(s,'extraction_completed',p['id'],'Document extracted with source locations; '+('cached interpretation reused.' if cached else 'new profile version saved.'))

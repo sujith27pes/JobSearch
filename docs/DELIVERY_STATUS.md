@@ -1,9 +1,13 @@
 # Delivery status
 
+## Latest verification — 4 October 2026
+
+100 automated tests, TypeScript/Vite production compilation, the 150/150 synthetic scoring benchmark, and browser recruiter workflows pass. The configured NVIDIA endpoint passed authenticated generation and a complete fictional JD/resume/assessment flow (three requests, 3,163 tokens). Tests used isolated databases and no saved candidate data was sent. See `CHANGES-2026-10-04.md` for all edits, validation limits and restart instructions. Older dated entries below describe prior checks.
+
 ## Verified in this workspace
 
 - React TypeScript production build passes.
-- **41 automated tests pass.** The domain/integration suite covers expiry, status removal, scoring, source references, caches, comparisons, corrections, source permissions, deletion, failed ingestion, worker leases, and safe exports.
+- **71 automated tests pass.** The domain/integration suite covers expiry, status removal, scoring, source references, caches, comparisons, corrections, source permissions, deletion, failed ingestion, worker leases, and safe exports.
 - The isolated synthetic benchmark checks 150 criterion outcomes across 30 profiles against predeclared expectations. Results are saved in `benchmark-results.json`. This is a fixture regression check, not proof of AI accuracy or fairness.
 - Browser inspection verified jobs, historical candidate filtering, candidate detail, essential-status rendering, selection of two candidates, comparison, and an 80-to-90 gap scenario that leaves the official score at 80. Desktop 1280px and narrow 768px layouts were inspected. The simplified frontend was rebuilt and checked again on 2 October 2026.
 
@@ -37,7 +41,7 @@ Do not bind the demo API beyond localhost. Keep one worker process. Successful u
 
 - Activity uses job names and plain progress labels, with completed history hidden initially.
 - Upload dialog resets when reopened. AI-mode queue concurrency is one to reduce free-tier bursts.
-- Latest final checks: 41 tests pass, TypeScript/Vite build passes, synthetic benchmark 150/150.
+- Latest final checks: 71 tests pass, TypeScript/Vite build passes, synthetic benchmark 150/150.
 
 ## Interview tracking fix — 2 October 2026
 
@@ -46,3 +50,22 @@ Do not bind the demo API beyond localhost. Keep one worker process. Successful u
 - Existing moves remain visible; job provenance is inferred only when one reviewed job is unambiguous.
 - Pool permissions, employee visibility, retention and suppression apply to the interview list.
 - Interview metadata survives resume refresh imports.
+
+
+## Reliability and recruiter insights — 2 October 2026
+
+- All seven reported issues have targeted regression checks. The suite passes 71 tests; TypeScript/Vite production compilation and the 150/150 synthetic fixture benchmark pass.
+- A genuine request to the configured NVIDIA Nemotron 3 Ultra 550B endpoint passed a fictional JD/resume/assessment flow: three requests, 3,444 tokens. A Graduate Developer with dated backend duties received full documented credit. This validates this case and connectivity, not general hiring quality.
+- Three-candidate differences, resume replacement, identical upload reuse, cache survival, ingestion stages, saved-date scoring, calendar cache refreshes and source restrictions are covered by tests.
+- Descriptive title transitions, explicit promotion intervals, short completed-role context, first-class skill freshness, cross-job exploration and aggregate monitoring are implemented.
+- Monitoring is not demographic adverse-impact analysis. Promotion and tenure insights neither predict performance/flight risk nor change scores.
+- NVIDIA requests use a shared gate, conservative pacing, configurable timeouts, explicit non-streaming and no reasoning by default. Mocked tests cover quota cooldown and truncated output rejection. Free service uptime/quota availability remains external.
+- Browser validation used a separate synthetic database; the user's real candidate data and existing running service were not modified by the test session.
+
+## Connection diagnostics and activity history — 3 October 2026
+
+- 83 automated tests pass and the TypeScript/Vite production build passes.
+- The configured NVIDIA key/model passed a tiny authenticated live test: HTTP 200, 32 tokens, no resume data. The historical cause of the earlier connection failures is not established by this success.
+- Activity includes an explicit no-generation reachability check. Command-line network and optional authenticated generation checks load `.env` without starting the application.
+- Safe error messages identify available DNS/TLS/network-permission/proxy/refused-connection causes. Verified TLS uses Windows system roots with optional approved PEM augmentation.
+- Older failed attempts move into history after a newer attempt supersedes them. Retry rejects superseded profile/rubric attempts. Existing candidate data and API keys were not reset or replaced.

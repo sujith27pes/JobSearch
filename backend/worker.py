@@ -15,7 +15,7 @@ def claim():
         tasks=db.all_of(s,'task')
         t=next((t for t in tasks if t['status']=='queued' or (t['status']=='running' and t.get('lease_until',0)<time.time())),None)
         if t:
-            db.put(s,t['id'],{**t,'status':'running','stage':'assessing','attempts':t['attempts']+1,'heartbeat':time.time(),'lease_until':time.time()+180})
+            db.put(s,t['id'],{**t,'status':'running','stage':'parsing' if t.get('kind')=='ingest' else 'assessing','attempts':t['attempts']+1,'heartbeat':time.time(),'lease_until':time.time()+180})
         s.commit()
         return t
 

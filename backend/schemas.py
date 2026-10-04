@@ -8,7 +8,7 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
 class Criterion(StrictModel):
-    id: str
+    id: str = Field(min_length=1, max_length=100)
     requirement: str = Field(min_length=2, max_length=500)
     source_passage: str = ''
     category: Literal['skill', 'responsibility', 'experience', 'qualification'] = 'skill'
@@ -25,6 +25,7 @@ class Criterion(StrictModel):
     recency_months: int | None = Field(default=None, ge=1, le=1200)
 
 class JobCreate(StrictModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     title: str = Field(min_length=2, max_length=150)
     description: str = Field(min_length=10, max_length=20000)
     internal: bool = True
@@ -48,6 +49,9 @@ class Scenario(StrictModel):
 
 class Comparison(StrictModel):
     assessment_ids: list[str] = Field(min_length=2, max_length=3)
+
+class OpportunityRequest(StrictModel):
+    job_ids: list[str] | None = Field(default=None, min_length=1, max_length=3)
 
 class Review(StrictModel):
     revision: int

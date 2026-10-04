@@ -32,7 +32,8 @@ def main():
             items=assess_profile(p,criteria);a=score(criteria,items,p['evidence'],p['facts'])
             for r in a['results']:
                 total+=1
-                expected=EXPECTED[n%6][r['requirement']]
+                fixture_index=int(p['source_record_id'].removeprefix('SYN-'))-1
+                expected=EXPECTED[fixture_index%6][r['requirement']]
                 correct+=r['status']==expected
                 if r['status']!=expected:errors.append({'profile':p['id'],'criterion':r['requirement'],'expected':expected,'observed':r['status']})
                 unsupported+=int(r['status']!='not_evidenced' and not r['evidence_ids'])

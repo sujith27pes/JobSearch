@@ -12,7 +12,7 @@ A separate Python worker uses a persisted queue with transactional claims, a 180
 
 1. Job creation extracts criteria into a draft; no scoring before approval.
 2. Approval stores an immutable rubric snapshot. The recruiter UI defaults to this job’s current applicants; historical/internal pools are an explicit opt-in or subsequent search.
-3. Upload acceptance stores an opaque-named document and pending profile. Identity is source type plus source record ID, not name or file hash.
+3. Upload acceptance stores an opaque-named document and pending profile. Identity is source type plus source record ID. An explicit replacement reuses that ID; an identical manifest-less file for the same job reuses its existing upload. File hashes never merge identities across sources or jobs, and names never establish identity.
 4. The worker parses the upload, validates limits, extracts facts, and validates source IDs.
 5. Successful extraction removes the raw upload, saves a profile version, and queues refresh records for applicable jobs.
 6. The matching worker checks current eligibility again, resolves an interpretation cache, and assesses if required.
@@ -43,7 +43,7 @@ Valid source references do not establish semantic entailment. Humans must still 
 
 - Extraction: SHA-256 file content, interpreter mode, model and prompt version.
 - Interpretation: profile version, rubric content excluding weight/enabled state, mode/model/prompt version.
-- Final assessment: profile version, approved rubric version, mode/model/prompt version.
+- Final assessment: profile version, approved rubric version, mode/model/prompt version, evaluation month. Each record also stores its exact evaluation date.
 
 Changing weights preserves interpretation. Changing requirements does not. Deleting a profile removes its versions, assessments, review data, pending tasks, interpretation cache and relevant extraction cache. Events retain only opaque record IDs and action metadata.
 
@@ -72,3 +72,36 @@ Large-pool budgeted batches of 100 are a production extension, not exposed by th
 Assessment prompt version jobscore-2.2-responsibility-first evaluates dated duties regardless of title. Cache keys include the prompt version. The latest current-method assessment replaces older entries in candidate listings while stored records remain available. Existing records carry a needs_reassessment flag and offer a one-profile reassessment endpoint. Missing duration is unresolved, not explicit failure.
 
 Operational heartbeats update lease fields atomically without incrementing business revisions; they cannot overwrite terminal task status. A task exception is contained by the worker. Groq 429 responses honour short Retry-After windows and produce a plain quota message when retries are exhausted.
+
+
+## Evaluation date and monthly refresh
+
+`score(..., today=...)` and `assess_profile(..., today=...)` use the same captured date from the queued task. Date-sensitive calculations are reproducible from saved inputs and that date. Default capture is the deployment calendar date; never compare scores from different dates as if their temporal conditions were identical. Last use may be `present` only when supplied evidence establishes ongoing use. Fixed dates remain fixed; skills are not automatically assumed fresh because the employee remains employed.
+
+Interpretation caches store their evaluation date. A duration is advanced without a model call only if its original supported months exactly matched the source-linked full role intervals and a linked role explicitly ends at `present`. Shorter project-specific duration estimates are held fixed. Calendar refresh records are unique per profile version/rubric/evaluation month, and only current eligible records with an existing current-engine cache are scheduled. This refresh never migrates old-engine evidence or invents new duties. A monthly arithmetic record is added; the previous score stays in history. Worker downtime delays refresh; the UI flags stale date-sensitive assessments.
+
+## Additional interfaces
+
+- `GET /api/monitoring?include_samples=false`: current latest eligible assessments by pool plus retained per-month history. Current eligibility, source permissions and profile versions apply. History labels rubric counts; role/rubric mix may change.
+- `GET /api/profiles/{id}/opportunities`: current-version results, pending state and item errors for explicit other-role requests.
+- `POST /api/profiles/{id}/opportunities`: at most three recruiter-selected eligible other approved jobs (`job_ids` in the request body), one active exploration per profile version, no application transfer. Requests can wait behind other jobs in the worker queue. Tasks and results use the same engine/cache contract. Results are stored separately as `opportunity_assessment` and never appear as applications to another job.
+- Multipart `POST /api/imports` additionally accepts `profile_id` and `profile_revision` for explicit single-file replacement. Stale revisions return 409. Permissions and original interview stage are preserved.
+- Comparison returns `pairwise_differences` for every pair among two or three candidates. Contribution deltas retain candidate identities.
+
+`insights.py` contains descriptive context and conservative duration refresh logic. `insights_api.py` exposes monitoring and explicit other-role search. `model_limits.py` coordinates the NVIDIA request gate/cooldown across API and worker. The new frontend views/components are separate from the existing workspace file.
+
+## NVIDIA request safety
+
+One request is allowed in flight per endpoint/model within this shared SQLite workspace. Starts are paced at the configured requests/minute; retries obey Retry-After separately. A persisted lease permits recovery after a terminated request process; a shared quota cooldown prevents repeated requests after a long/exhausted 429. The default NVIDIA read timeout is 180 seconds; the waiting gate has a bounded 240-second timeout. There are at most two transient retries and one schema repair. Reasoning is disabled by default; explicit non-streaming avoids parsing an SSE response as JSON. The token budget remains an actual-usage soft stop, not an exact preflight token reservation or a provider quota promise. Multiple installations/keys and distributed workers require production-grade quota coordination.
+
+Shared extraction entries are removed only when another profile does not reference the document hash. Identity, eligibility, review stage and scores remain separate per profile. No raw provider response, key or resume text is included in error logs.
+
+Future employment periods are capped at the evaluation month for duration arithmetic. Future last-use dates remain unresolved against recency conditions until corrected. Cache deletion covers previous document versions and preserves hashes referenced by other retained profiles.
+
+## Model connection diagnostics
+
+`backend/connection.py` builds a verified TLS context, classifies sanitized transport causes and checks provider reachability. Windows loads system-approved certificate roots; an optional `LLM_CA_BUNDLE` augments them. Verification is never disabled. Assessment requests use the same context. Provider exception bodies, credentials and resume content are not included in diagnostic output.
+
+`POST /api/model-connection/check` performs DNS resolution and an unauthenticated GET to the configured `/models` endpoint only when requested by the recruiter. Any HTTP response proves reachability, not valid credentials, model availability or remaining quota. There is no automatic provider polling. `run.py --check-model` offers the same check; `--test-model` adds one small authenticated generation with a fixed non-resume prompt, at most 64 output tokens, and no retry. DNS resolution follows the operating system's resolver timeout; HTTP requests have bounded timeouts.
+
+Activity groups attempts by profile, job, task kind and exploration scope. Only the newest attempt for the current profile version and job rubric is actionable. Historical failures remain inspectable but cannot be retried against outdated inputs. A successful check does not silently replay failed candidate requests. Run counters describe their original run; attempt history is retained.

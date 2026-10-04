@@ -9,7 +9,7 @@
   "errors": [],
   "model_calls": 0,
   "model_tokens": 0,
-  "seconds": 0.031,
+  "seconds": 0.032,
   "limitations": [
     "Synthetic fixtures contain six repeating patterns, not a representative recruitment dataset.",
     "AI endpoint, fairness, and real-world hiring accuracy are not evaluated.",
