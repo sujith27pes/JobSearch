@@ -1,8 +1,37 @@
-.venv/
-node_modules/
-dist/
-__pycache__/
-.pytest_cache/
-data/
+# Local credentials and environment overrides
 .env
+.env.*
+!.env.example
+
+# Private workspace data
+/data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Installed dependencies
+.venv/
+venv/
+node_modules/
+
+# Generated frontend and Python artifacts
+dist/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Local editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
 *.log

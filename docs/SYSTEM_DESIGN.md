@@ -1,5 +1,7 @@
 # JobScore system design
 
+This reference describes the current local implementation. Start with the [README](../README.md) for the recruiter workflow and setup, or [VALIDATION.md](VALIDATION.md) for the checked behaviour and deployment limits.
+
 ## Runtime
 
 React uses TanStack Query for server state, TanStack Table for candidate sorting, React Router for navigation, and locally owned shadcn-style Radix components for dialogs/buttons. Tailwind and custom CSS implement the enterprise visual system.
@@ -69,9 +71,9 @@ Large-pool budgeted batches of 100 are a production extension, not exposed by th
 
 ## Recruiter usability and interpretation revision
 
-Assessment prompt version jobscore-2.2-responsibility-first evaluates dated duties regardless of title. Cache keys include the prompt version. The latest current-method assessment replaces older entries in candidate listings while stored records remain available. Existing records carry a needs_reassessment flag and offer a one-profile reassessment endpoint. Missing duration is unresolved, not explicit failure.
+Assessment prompt version `jobscore-2.3-dated-evidence` evaluates dated duties regardless of title and requires last-use dates to be grounded in source text. Cache keys include the prompt version. The latest current-method assessment replaces older entries in candidate listings while stored records remain available. Existing records carry a needs_reassessment flag and offer a one-profile reassessment endpoint. Missing duration is unresolved, not explicit failure. Exact templates and their provenance are documented in [PROMPTS.md](../PROMPTS.md).
 
-Operational heartbeats update lease fields atomically without incrementing business revisions; they cannot overwrite terminal task status. A task exception is contained by the worker. Groq 429 responses honour short Retry-After windows and produce a plain quota message when retries are exhausted.
+Operational heartbeats update lease fields atomically without incrementing business revisions; they cannot overwrite terminal task status. A task exception is contained by the worker. Provider 429 responses honour short Retry-After windows and produce a plain quota message when retries are exhausted; NVIDIA additionally uses a shared cooldown.
 
 
 ## Evaluation date and monthly refresh
