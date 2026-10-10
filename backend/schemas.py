@@ -99,6 +99,7 @@ class AssessmentItem(StrictModel):
     rationale: str = Field(min_length=3)
     evidence_ids: list[str] = []
     months: int | None = Field(default=None, ge=0)
+    duration_basis: Literal['project_estimate', 'role_intervals'] = Field(default='project_estimate', description='Use role_intervals only for general experience evidenced throughout every selected dated role. Python computes its months. Shorter projects and skill-specific duration remain project_estimate.')
     last_used: str | None = None
     role_ids: list[str] = []
 

@@ -19,7 +19,7 @@ from .connection import tls_context,connection_reason,endpoint_url
 
 MODE = os.getenv('JOBSCORE_MODE', 'demo')
 MODEL = os.getenv('LLM_MODEL', '')
-PROMPT_VERSION = 'jobscore-2.3-dated-evidence'
+PROMPT_VERSION = 'jobscore-2.4-role-duration'
 ASSESSMENT_GUIDANCE = '''Assess each criterion exactly once against its approved conditions.
 Evaluate the work described, never exact job-title wording. Graduate Developer, Application Developer,
 Software Engineer and Backend Developer can all demonstrate backend work through building services,
@@ -30,6 +30,9 @@ list, coursework, tutorials or the title alone does not establish professional a
 Do not award full-job skill duration when only a shorter project is evidenced. Merge overlapping periods.
 For duration criteria return supported months and role_ids when grounded; otherwise months=null and
 status=not_evidenced. Missing evidence is not explicit failure: use not_evidenced, not unmet.
+For general experience documented throughout the selected dated roles, set duration_basis=role_intervals;
+Python calculates the non-overlapping months. For shorter projects or skill-specific duration, use
+duration_basis=project_estimate and supply only the supported duration. Never extend a project to full role tenure.
 Explain what work supports the requirement or what specific information needs clarification, in plain
 recruiter language. Never say a candidate lacks ability merely because a keyword or title is absent.
 Every assessable claim needs supplied source IDs. For compounds, full support requires one documented
@@ -231,5 +234,5 @@ def assess_profile(profile,criteria,today=None):
             if dates: last_used=max([last_used] + dates) if last_used else max(dates)
         # The preview never pretends job tenure establishes skill-specific duration.
         months=union_months(roles,today) if c['category']=='experience' and roles and applied else None
-        results.append({'criterion_id':c['id'],'status':status,'rationale':why+' Offline rule-based demonstration.','evidence_ids':[e['id'] for e in refs[:3]],'months':months,'last_used':last_used,'role_ids':[r['id'] for r in roles]})
+        results.append({'criterion_id':c['id'],'status':status,'rationale':why+' Offline rule-based demonstration.','evidence_ids':[e['id'] for e in refs[:3]],'months':months,'duration_basis':'role_intervals' if months is not None and c['category']=='experience' else 'project_estimate','last_used':last_used,'role_ids':[r['id'] for r in roles]})
     return results

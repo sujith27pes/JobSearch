@@ -310,6 +310,9 @@ list, coursework, tutorials or the title alone does not establish professional a
 Do not award full-job skill duration when only a shorter project is evidenced. Merge overlapping periods.
 For duration criteria return supported months and role_ids when grounded; otherwise months=null and
 status=not_evidenced. Missing evidence is not explicit failure: use not_evidenced, not unmet.
+For general experience documented throughout the selected dated roles, set duration_basis=role_intervals;
+Python calculates the non-overlapping months. For shorter projects or skill-specific duration, use
+duration_basis=project_estimate and supply only the supported duration. Never extend a project to full role tenure.
 Explain what work supports the requirement or what specific information needs clarification, in plain
 recruiter language. Never say a candidate lacks ability merely because a keyword or title is absent.
 Every assessable claim needs supplied source IDs. For compounds, full support requires one documented
@@ -349,7 +352,7 @@ The angle-bracket values above explain the message structure; actual requests co
 | Resume extraction | Extracted | Numbered source passages in `passages`. |
 | Assessment | ModelAssessment | Captured `evaluation_date`, approved `criteria`, source `passages` and extracted `roles`. |
 
-The source of truth is [backend/intelligence.py](backend/intelligence.py), with contracts in [backend/schemas.py](backend/schemas.py). The diagnostic prompt lives in [backend/connection.py](backend/connection.py). The current extraction/assessment method identifier is `jobscore-2.3-dated-evidence`.
+The source of truth is [backend/intelligence.py](backend/intelligence.py), with contracts in [backend/schemas.py](backend/schemas.py). The diagnostic prompt lives in [backend/connection.py](backend/connection.py). The current extraction/assessment method identifier is `jobscore-2.4-role-duration`.
 
 Candidate identity fields and previous application outcomes are not separate assessment inputs. Passage text may still contain personal information, so this is not anonymisation. There is no browsing, external employment verification or automatic hiring decision in these calls.
 

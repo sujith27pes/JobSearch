@@ -37,6 +37,8 @@ A separate Python worker uses a persisted queue with transactional claims, a 180
 
 The model returns criterion statuses, explanations and source IDs. It never returns an official aggregate score. Positive and explicitly negative assessments need resolvable evidence. Criterion IDs must match the rubric exactly once. Referenced role IDs must resolve. Claimed duration cannot exceed source-linked dated intervals.
 
+For general experience evidenced throughout selected roles, the model identifies `duration_basis=role_intervals` and the relevant role/source IDs. Python calculates the union of those dated intervals at the saved evaluation date and writes the duration explanation. It does not trust the model's month arithmetic. Incomplete or ungrounded periods remain unresolved. Shorter projects and skill-specific experience use `project_estimate`; they are not extended to the full employment period.
+
 Weight-normalized scoring and scenario arithmetic are deterministic. Unknown evidence receives zero documented credit with an explicit unknown label. Evidence coverage counts assessable criteria separately. Role suitability is never a probability of success, and there is no automatic rejection threshold.
 
 Valid source references do not establish semantic entailment. Humans must still assess whether the cited text actually supports the conclusion. The demo heuristic does not claim to understand arbitrary custom acceptance conditions.
@@ -71,7 +73,7 @@ Large-pool budgeted batches of 100 are a production extension, not exposed by th
 
 ## Recruiter usability and interpretation revision
 
-Assessment prompt version `jobscore-2.3-dated-evidence` evaluates dated duties regardless of title and requires last-use dates to be grounded in source text. Cache keys include the prompt version. The latest current-method assessment replaces older entries in candidate listings while stored records remain available. Existing records carry a needs_reassessment flag and offer a one-profile reassessment endpoint. Missing duration is unresolved, not explicit failure. Exact templates and their provenance are documented in [PROMPTS.md](../PROMPTS.md).
+Assessment prompt version `jobscore-2.4-role-duration` evaluates dated duties regardless of title, distinguishes full role intervals from shorter projects, and requires last-use dates to be grounded in source text. Cache keys include the prompt version. The latest current-method assessment replaces older entries in candidate listings while stored records remain available. Existing records carry a needs_reassessment flag and offer a one-profile reassessment endpoint. Missing duration is unresolved, not explicit failure. Exact templates and their provenance are documented in [PROMPTS.md](../PROMPTS.md).
 
 Operational heartbeats update lease fields atomically without incrementing business revisions; they cannot overwrite terminal task status. A task exception is contained by the worker. Provider 429 responses honour short Retry-After windows and produce a plain quota message when retries are exhausted; NVIDIA additionally uses a shared cooldown.
 
@@ -80,7 +82,9 @@ Operational heartbeats update lease fields atomically without incrementing busin
 
 `score(..., today=...)` and `assess_profile(..., today=...)` use the same captured date from the queued task. Date-sensitive calculations are reproducible from saved inputs and that date. Default capture is the deployment calendar date; never compare scores from different dates as if their temporal conditions were identical. Last use may be `present` only when supplied evidence establishes ongoing use. Fixed dates remain fixed; skills are not automatically assumed fresh because the employee remains employed.
 
-Interpretation caches store their evaluation date. A duration is advanced without a model call only if its original supported months exactly matched the source-linked full role intervals and a linked role explicitly ends at `present`. Shorter project-specific duration estimates are held fixed. Calendar refresh records are unique per profile version/rubric/evaluation month, and only current eligible records with an existing current-engine cache are scheduled. This refresh never migrates old-engine evidence or invents new duties. A monthly arithmetic record is added; the previous score stays in history. Worker downtime delays refresh; the UI flags stale date-sensitive assessments.
+Date-only eligibility, rejection, import and default scoring use the deployment's local calendar consistently. Audit timestamps use UTC. A rejection recorded just after local midnight therefore remains eligible on that same local date.
+
+Interpretation caches store their evaluation date. Explicit full-role duration is recalculated from the selected source-linked periods at the new evaluation date. Legacy estimates advance only when their previous supported months exactly matched the full role intervals and a linked role ends at `present`. Shorter project-specific estimates are held fixed. Calendar refresh records are unique per profile version/rubric/evaluation month, and only current eligible records with an existing current-engine cache are scheduled. This refresh never migrates old-engine evidence or invents new duties. A monthly arithmetic record is added; the previous score stays in history. Worker downtime delays refresh; the UI flags stale date-sensitive assessments.
 
 ## Additional interfaces
 

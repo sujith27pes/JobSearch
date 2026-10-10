@@ -4,7 +4,7 @@ import hashlib
 import itertools
 import json
 import re
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 
 SOURCES = ['current_applicant', 'past_applicant', 'employee']
 CREDITS = {'supported': 1.0, 'partial': .5, 'not_evidenced': 0., 'unmet': 0.}
@@ -27,7 +27,7 @@ def add_months(d, months):
     return date(y, m, min(d.day, calendar.monthrange(y, m)[1]))
 
 def eligibility(profile, job=None, today=None, pools=None):
-    today = today or datetime.now(timezone.utc).date()
+    today = today or date.today()
     if pools is not None and profile['source_type'] not in pools:
         return False, 'Pool access restricted'
     if profile.get('processing_status','ready') != 'ready':
@@ -130,7 +130,7 @@ def overlaps(criteria):
     return found
 
 def score(criteria, items, evidence, facts=None, today=None):
-    today = today or datetime.now(timezone.utc).date()
+    today = today or date.today()
     active = [c for c in criteria if c.get('enabled', True) and c['weight'] > 0]
     total = sum(c['weight'] for c in active)
     if total <= 0:
@@ -155,6 +155,20 @@ def score(criteria, items, evidence, facts=None, today=None):
             raise ValueError('Assessment role reference does not resolve')
         credit = CREDITS[i['status']]
         if c.get('required_months'):
+            if i.get('duration_basis') == 'role_intervals':
+                if c.get('category') != 'experience':
+                    raise ValueError('Full role intervals apply only to general experience, not skill-specific duration')
+                selected=[roles_byid[rid] for rid in i.get('role_ids',[]) if rid in roles_byid]
+                grounded=bool(selected) and i['status'] in ('supported','partial') and all(
+                    set(r.get('evidence_ids',[])) & set(refs)
+                    and month_index(r.get('start'),today) is not None
+                    and month_index(r.get('end'),today) is not None
+                    and month_index(r['start'],today) <= min(month_index(r['end'],today),month_index('present',today))
+                    for r in selected)
+                calculated=union_months(selected,today) if grounded else None
+                i={**i,'months':calculated}
+                if calculated is not None:
+                    i={**i,'rationale':f"Source-linked roles document {calculated} non-overlapping months of relevant work as of {today.isoformat()}; the approved requirement is {c['required_months']} months. The linked passages establish the duties across those role periods."}
             if facts is not None and i.get('months') is not None:
                 supported_roles=[roles_byid[rid] for rid in i.get('role_ids',[]) if set(roles_byid[rid].get('evidence_ids',[])) & set(refs)]
                 ceiling=union_months(supported_roles, today)

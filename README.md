@@ -6,6 +6,12 @@ Reading a resume is easy. Comparing it fairly against a job's requirements is ha
 
 JobScore turns a job description into requirements the recruiter can review, compares resumes against those approved requirements, and shows the source text behind each finding. It also helps recruiters revisit eligible past applicants and consider opted-in internal talent. The recruiter makes the hiring decision.
 
+## See it in action
+
+![AI assessment identifying relevant work beyond exact keywords](docs/images/02-contextual-matching.jpg)
+
+In this fictional AI-mode example, Maya's described work supports an incident-response requirement even though that phrase never appears in her resume. Open the [demo gallery](DEMO.md) for source evidence, three-candidate comparison, evidence-gap scenarios, rediscovery and internal mobility.
+
 ## What you can do
 
 - **Define what matters.** Review the requirements extracted from a job description, adjust priorities and weights, and approve the final set before assessment starts.
@@ -153,4 +159,3 @@ Start-JobScore.ps1 Windows launcher shortcut
 ```
 
 Local `.env`, databases, uploaded documents, virtual environments, installed packages and generated build outputs are excluded from Git. Submit the tracked source files; do not attach the entire working folder with private data and credentials.
-

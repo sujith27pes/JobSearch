@@ -1,10 +1,10 @@
 # Validation
 
-## Submission checks — 8 October 2026
+## Submission checks — 8–9 October 2026
 
 | Check | Result | What it establishes |
 |---|---|---|
-| Backend test suite | 115 passed | Specified domain, API, ingestion, lifecycle and recovery behaviours match regression expectations. |
+| Backend test suite, 9 October | 125 passed | Specified domain, API, ingestion, lifecycle and recovery behaviours match regression expectations, including deterministic role duration and local-midnight rejection. |
 | TypeScript check | Passed | Frontend source satisfies the current compiler configuration. |
 | Vite production build | Passed | The frontend can be compiled into distributable assets. |
 | Offline synthetic benchmark | 150/150 expected criterion outcomes | The six designed fixture patterns produce the expected rule-based findings. |
@@ -17,6 +17,7 @@ These results do not establish real-world semantic accuracy, fairness, productio
 ## What the tests cover
 
 - Normalised scoring, coverage, essential status, experience intervals, recency and scenario calculations.
+- Wrong model month arithmetic, overlapping full role periods, shorter project estimates, incomplete date evidence and local/UTC calendar boundaries.
 - Exact criterion membership, source references and relevant role references.
 - Rediscovery expiry, permission/retention controls, internal visibility and interview exclusion.
 - Rejection, repeated rejection, original-job exclusion and preservation of local rejection/interview provenance.
@@ -44,9 +45,11 @@ npm run build
 
 The frontend script runs `tsc -b` followed by `vite build --configLoader native`. During submission preparation those same tools were invoked directly using the available Node executable because npm was not on the automation shell's PATH.
 
-The backend run reported an upstream Starlette/httpx deprecation warning and a local pytest-cache permission warning. All tests passed. The Vite build reported a non-blocking bundle-size advisory. Neither warning is represented as a clean, warning-free result.
+The latest backend run used `-p no:cacheprovider` and reported one upstream Starlette/httpx deprecation warning; all 125 tests passed. The earlier run also reported a local pytest-cache permission warning. The Vite build reported a non-blocking bundle-size advisory. Neither warning is represented as a clean, warning-free result.
 
 ## Earlier integration and browser evidence
+
+The 9 October live AI run assessed five fictional resumes across all three pools and completed one other-role assessment. Final results had zero pending or failed items. Source references resolved, three-candidate comparison returned all three pairs, and running the evidence scenario did not change the saved assessment. The run, including refreshes, recorded 20 model calls and 38,890 provider-reported tokens. The [demo gallery](../DEMO.md) contains the final browser captures and their interpretation method.
 
 Recorded checks on 4 October exercised job creation, rubric edits and approval, fictional DOCX upload, automatic assessment, evidence viewing, interview tracking, small-sample monitoring and three-candidate comparison in an isolated workspace. Follow-up checks exercised rejection followed by rediscovery in another job, theme persistence, keyboard switching and a narrow layout.
 

@@ -2,6 +2,14 @@
 
 This record summarises the implemented changes. Validation evidence and limitations are maintained separately in [VALIDATION.md](VALIDATION.md).
 
+## Live AI demo and duration correction — 9 October 2026
+
+- Calculated general experience across source-linked full role periods in Python instead of accepting the model's month arithmetic. Shorter project estimates remain separate and overlapping roles are merged.
+- Replaced duration explanations with the computed period and approved requirement; versioned the interpretation method so earlier results request reassessment.
+- Aligned date-only eligibility and scoring with local rejection/import dates, fixing same-day rejection immediately after local midnight. Audit timestamps remain UTC.
+- Added regression coverage for wrong model arithmetic, overlapping periods, incomplete dates, shorter projects, skill tenure and the local/UTC midnight boundary.
+- Captured seven authentic AI-mode demo screenshots using fictional candidates in an isolated database, added a captioned gallery, and linked the contextual-matching example from the README.
+
 ## Submission preparation — 8 October 2026
 
 - Rewrote the README around the problem, recruiter workflow, score explanation and reproducible setup.
